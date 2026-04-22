@@ -3,7 +3,7 @@
     "name": "CampusTrack",
     "slug": "campustrack",
     "scheme": "campustrack",
-    "icon": "./assets/images/icon.png",
+    "icon": "./assets/images/splash-icon.png",
     "splash": {
       "image": "./assets/images/splash-icon.png",
       "resizeMode": "contain",

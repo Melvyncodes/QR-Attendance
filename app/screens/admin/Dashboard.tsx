@@ -17,7 +17,7 @@ import {
 import { auth, db } from '../../../firebase';
 
 const gridItems = [
-  { label: 'Cleanup Orphaned Sessions', icon: 'trash-outline', color: '#2C3E7A', route: '/screens/admin/CleanupOrphanedSessions' },
+  // { label: 'Cleanup Orphaned Sessions', icon: 'trash-outline', color: '#2C3E7A', route: '/screens/admin/CleanupOrphanedSessions' },
   { label: 'Manage Users', icon: 'people-outline', color: '#2C3E7A', route: '/screens/admin/ManageUsers' },
   { label: 'Manage Courses', icon: 'book-outline', color: '#2C3E7A', route: '/screens/admin/ManageCourses' },
   { label: 'Notifications', icon: 'notifications-outline', color: '#2C3E7A', route: '/screens/admin/Notifications' },
