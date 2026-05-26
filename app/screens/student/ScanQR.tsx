@@ -311,6 +311,7 @@ export default function ScanQR() {
             <CameraView
               style={styles.camera}
               facing="back"
+              selectedLens="wide-angle-camera"
               onBarcodeScanned={scanned ? undefined : handleBarCodeScanned}
               barcodeScannerSettings={{ barcodeTypes: ['qr'] }}
             >
