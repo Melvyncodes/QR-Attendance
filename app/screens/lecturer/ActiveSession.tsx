@@ -38,7 +38,7 @@ import { db } from '../../../firebase';
 const isWeb = Dimensions.get('window').width > 768;
 const NFC_SERVER = 'http://localhost:3333';
 
-const RADIUS_OPTIONS = [30, 50, 100, 200];
+const RADIUS_OPTIONS = [100, 200, 500, 700];
 
 export default function ActiveSession() {
   const { userData: lecturerData } = useUser();
