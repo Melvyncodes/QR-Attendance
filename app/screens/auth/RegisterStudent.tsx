@@ -17,6 +17,8 @@ import {
 } from 'react-native';
 import { auth, db } from '../../../firebase';
 
+const LEVEL_OPTIONS = ['100', '200', '300', '400', '500'];
+
 const InputField = ({
   label, value, onChangeText, placeholder, keyboardType, secureTextEntry, autoCapitalize
 }: any) => (
@@ -44,6 +46,7 @@ export default function RegisterStudent() {
   const [department, setDepartment] = useState('');
   const [college, setCollege] = useState('');
   const [phoneNumber, setPhoneNumber] = useState('');
+  const [level, setLevel] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [loading, setLoading] = useState(false);
@@ -80,7 +83,7 @@ export default function RegisterStudent() {
 
   const handleRegister = async () => {
     if (!firstName || !lastName || !gender || !matricNumber || !email ||
-      !department || !college || !phoneNumber ||
+      !department || !college || !phoneNumber || !level ||
       !password || !confirmPassword) {
       setError('Please fill in all fields');
       return;
@@ -114,6 +117,7 @@ export default function RegisterStudent() {
         department: cleanDept,
         college: cleanCollege,
         phoneNumber,
+        level,
         role: 'student',
         nfcCardId: null,
         profilePhoto: null,
@@ -211,6 +215,23 @@ export default function RegisterStudent() {
             placeholder="Enter your matric number"
             autoCapitalize="characters"
           />
+
+          {/* Level Selector */}
+          <Text style={styles.label}>Level</Text>
+          <View style={styles.levelContainer}>
+            {LEVEL_OPTIONS.map((l) => (
+              <TouchableOpacity
+                key={l}
+                style={[styles.levelButton, level === l && styles.levelActive]}
+                onPress={() => setLevel(l)}
+              >
+                <Text style={[styles.levelText, level === l && styles.levelTextActive]}>
+                  {l}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+
           <AutocompleteInput
             label="Department"
             value={department}
@@ -363,6 +384,35 @@ const styles = StyleSheet.create({
     color: '#666',
   },
   genderTextActive: {
+    color: '#fff',
+  },
+  // ── Level selector (same pill style as gender) ──────────────────────────────
+  levelContainer: {
+    flexDirection: 'row',
+    gap: 8,
+    marginTop: 8,
+    flexWrap: 'wrap',
+  },
+  levelButton: {
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+    alignItems: 'center',
+    borderRadius: 8,
+    backgroundColor: '#F5F6FA',
+    borderWidth: 1,
+    borderColor: '#E0E0E0',
+    minWidth: 56,
+  },
+  levelActive: {
+    backgroundColor: '#2C3E7A',
+    borderColor: '#2C3E7A',
+  },
+  levelText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#666',
+  },
+  levelTextActive: {
     color: '#fff',
   },
   button: {
