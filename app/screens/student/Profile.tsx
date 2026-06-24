@@ -41,6 +41,7 @@ export default function StudentProfile() {
   const [firstName, setFirstName] = useState(userData?.firstName || '');
   const [lastName, setLastName] = useState(userData?.lastName || '');
   const [phoneNumber, setPhoneNumber] = useState(userData?.phoneNumber || '');
+  const [level, setLevel] = useState(userData?.level || '');
 
   const roleLabel = (userData?.role || 'student').charAt(0).toUpperCase() + (userData?.role || 'student').slice(1);
   const roleBadgeLabel = (userData?.role || 'STUDENT').toUpperCase();
@@ -63,7 +64,12 @@ export default function StudentProfile() {
     }
     setSaving(true);
     try {
-      const updates = { firstName: firstName.trim(), lastName: lastName.trim(), phoneNumber: phoneNumber.trim() };
+      const updates = {
+        firstName: firstName.trim(),
+        lastName: lastName.trim(),
+        phoneNumber: phoneNumber.trim(),
+        level: level.trim(),
+      };
       await updateDoc(doc(db, 'users', userData?.uid), updates);
       if (setUserData) setUserData((prev: any) => ({ ...prev, ...updates }));
       setEditing(false);
@@ -77,8 +83,11 @@ export default function StudentProfile() {
   };
 
   const handleCancel = () => {
-    setFirstName(userData?.firstName || ''); setLastName(userData?.lastName || '');
-    setPhoneNumber(userData?.phoneNumber || ''); setEditing(false);
+    setFirstName(userData?.firstName || '');
+    setLastName(userData?.lastName || '');
+    setPhoneNumber(userData?.phoneNumber || '');
+    setLevel(userData?.level || '');
+    setEditing(false);
   };
 
   const avatarLetter = (userData?.firstName?.[0] || 'S').toUpperCase();
@@ -124,6 +133,7 @@ export default function StudentProfile() {
                 <EditField label="First Name *" value={firstName} onChange={setFirstName} placeholder="Enter first name" />
                 <EditField label="Last Name *" value={lastName} onChange={setLastName} placeholder="Enter last name" />
                 <EditField label="Phone Number" value={phoneNumber} onChange={setPhoneNumber} placeholder="Enter phone number" keyboardType="phone-pad" />
+                <EditField label="Level" value={level} onChange={setLevel} placeholder="Enter your level (e.g. 100, 200)" keyboardType="numeric" />
                 <EditField label="Matric Number (cannot be changed)" value={userData?.matricNumber || ''} onChange={() => { }} editable={false} />
                 <EditField label="Department (cannot be changed)" value={userData?.department || ''} onChange={() => { }} editable={false} />
                 <EditField label="Email (cannot be changed)" value={userData?.email || ''} onChange={() => { }} editable={false} />
