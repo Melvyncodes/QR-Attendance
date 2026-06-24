@@ -391,17 +391,15 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     gap: 8,
     marginTop: 8,
-    flexWrap: 'wrap',
   },
   levelButton: {
+    flex: 1,
     paddingVertical: 10,
-    paddingHorizontal: 16,
     alignItems: 'center',
     borderRadius: 8,
     backgroundColor: '#F5F6FA',
     borderWidth: 1,
     borderColor: '#E0E0E0',
-    minWidth: 56,
   },
   levelActive: {
     backgroundColor: '#2C3E7A',
