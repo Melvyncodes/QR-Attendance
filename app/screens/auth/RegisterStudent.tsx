@@ -13,6 +13,7 @@ import {
   Text,
   TextInput,
   TouchableOpacity,
+  useWindowDimensions,
   View
 } from 'react-native';
 import { auth, db } from '../../../firebase';
@@ -38,6 +39,9 @@ const InputField = ({
 );
 
 export default function RegisterStudent() {
+  const { width } = useWindowDimensions();
+  const isLarge = width >= 768;
+
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const [gender, setGender] = useState('');
@@ -53,7 +57,6 @@ export default function RegisterStudent() {
   const [error, setError] = useState('');
   const [livePrograms, setLivePrograms] = useState<string[]>([]);
 
-  // Fetch unique department names from existing users + courses
   useEffect(() => {
     const fetchPrograms = async () => {
       try {
@@ -78,7 +81,6 @@ export default function RegisterStudent() {
     fetchPrograms();
   }, []);
 
-  // Merge hardcoded common programs + live programs from Firestore (deduped)
   const programSuggestions = Array.from(new Set([...COMMON_BOWEN_PROGRAMS, ...livePrograms])).sort();
 
   const handleRegister = async () => {
@@ -124,7 +126,6 @@ export default function RegisterStudent() {
         createdAt: new Date().toISOString(),
       });
 
-      // Create matric lookup entry for matric-based login
       await setDoc(doc(db, 'matric_lookup', cleanMatric), {
         email,
         uid: user.uid,
@@ -145,159 +146,103 @@ export default function RegisterStudent() {
     }
   };
 
+  const formContent = (
+    <View style={[styles.form, isLarge && styles.formLarge]}>
+      {error ? <Text style={styles.error}>{error}</Text> : null}
+
+      <Text style={styles.sectionTitle}>Personal Information</Text>
+
+      <InputField label="First Name" value={firstName} onChangeText={setFirstName} placeholder="Enter your first name" />
+      <InputField label="Last Name" value={lastName} onChangeText={setLastName} placeholder="Enter your last name" />
+
+      <Text style={styles.label}>Gender</Text>
+      <View style={styles.pillRow}>
+        {['Male', 'Female'].map((g) => (
+          <TouchableOpacity
+            key={g}
+            style={[styles.pillBtn, gender === g && styles.pillActive]}
+            onPress={() => setGender(g)}
+          >
+            <Text style={[styles.pillText, gender === g && styles.pillTextActive]}>{g}</Text>
+          </TouchableOpacity>
+        ))}
+      </View>
+
+      <InputField label="Phone Number" value={phoneNumber} onChangeText={setPhoneNumber} placeholder="Enter your phone number" keyboardType="phone-pad" autoCapitalize="none" />
+
+      <Text style={styles.sectionTitle}>Academic Information</Text>
+
+      <InputField
+        label="Matric Number"
+        value={matricNumber.toUpperCase()}
+        onChangeText={(text: string) => setMatricNumber(text.toUpperCase())}
+        placeholder="Enter your matric number"
+        autoCapitalize="characters"
+      />
+
+      <Text style={styles.label}>Level</Text>
+      <View style={styles.pillRow}>
+        {LEVEL_OPTIONS.map((l) => (
+          <TouchableOpacity
+            key={l}
+            style={[styles.pillBtn, level === l && styles.pillActive]}
+            onPress={() => setLevel(l)}
+          >
+            <Text style={[styles.pillText, level === l && styles.pillTextActive]}>{l}</Text>
+          </TouchableOpacity>
+        ))}
+      </View>
+
+      <AutocompleteInput
+        label="Department"
+        value={department}
+        onChangeText={setDepartment}
+        placeholder="e.g. Computer Science"
+        suggestions={programSuggestions}
+        helperText="Start typing to see existing programs"
+      />
+      <AutocompleteInput
+        label="College"
+        value={college}
+        onChangeText={setCollege}
+        placeholder="e.g. COCCS - College of Computing..."
+        suggestions={BOWEN_COLLEGES}
+        helperText="Pick from Bowen's official colleges"
+      />
+
+      <Text style={styles.sectionTitle}>Account Information</Text>
+
+      <InputField label="Email Address" value={email} onChangeText={setEmail} placeholder="Enter your email" keyboardType="email-address" autoCapitalize="none" />
+      <InputField label="Password" value={password} onChangeText={setPassword} placeholder="Minimum 6 characters" secureTextEntry autoCapitalize="none" />
+      <InputField label="Confirm Password" value={confirmPassword} onChangeText={setConfirmPassword} placeholder="Re-enter your password" secureTextEntry autoCapitalize="none" />
+
+      <TouchableOpacity style={styles.button} onPress={handleRegister} disabled={loading}>
+        {loading ? <ActivityIndicator color="#fff" /> : <Text style={styles.buttonText}>Create Account</Text>}
+      </TouchableOpacity>
+
+      <TouchableOpacity onPress={() => router.back()}>
+        <Text style={styles.link}>Already have an account? Sign In</Text>
+      </TouchableOpacity>
+    </View>
+  );
+
   return (
-    <KeyboardAvoidingView
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-      style={styles.container}
-    >
+    <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={styles.container}>
       <ScrollView
-        contentContainerStyle={styles.scrollContent}
+        contentContainerStyle={[styles.scrollContent, isLarge && styles.scrollContentLarge]}
         showsVerticalScrollIndicator={false}
       >
-        {/* Header */}
         <View style={styles.header}>
           <Text style={styles.title}>Student Registration</Text>
           <Text style={styles.subtitle}>Create your student account</Text>
         </View>
-
-        {/* Form */}
-        <View style={styles.form}>
-          {error ? <Text style={styles.error}>{error}</Text> : null}
-
-          {/* Personal Info */}
-          <Text style={styles.sectionTitle}>Personal Information</Text>
-
-          <InputField
-            label="First Name"
-            value={firstName}
-            onChangeText={setFirstName}
-            placeholder="Enter your first name"
-          />
-          <InputField
-            label="Last Name"
-            value={lastName}
-            onChangeText={setLastName}
-            placeholder="Enter your last name"
-          />
-
-          {/* Gender Selector */}
-          <Text style={styles.label}>Gender</Text>
-          <View style={styles.genderContainer}>
-            {['Male', 'Female'].map((g) => (
-              <TouchableOpacity
-                key={g}
-                style={[styles.genderButton, gender === g && styles.genderActive]}
-                onPress={() => setGender(g)}
-              >
-                <Text style={[styles.genderText, gender === g && styles.genderTextActive]}>
-                  {g}
-                </Text>
-              </TouchableOpacity>
-            ))}
-          </View>
-
-          <InputField
-            label="Phone Number"
-            value={phoneNumber}
-            onChangeText={setPhoneNumber}
-            placeholder="Enter your phone number"
-            keyboardType="phone-pad"
-            autoCapitalize="none"
-          />
-
-          {/* Academic Info */}
-          <Text style={styles.sectionTitle}>Academic Information</Text>
-
-          <InputField
-            label="Matric Number"
-            value={matricNumber.toUpperCase()}
-            onChangeText={(text: string) => setMatricNumber(text.toUpperCase())}
-            placeholder="Enter your matric number"
-            autoCapitalize="characters"
-          />
-
-          {/* Level Selector */}
-          <Text style={styles.label}>Level</Text>
-          <View style={styles.levelContainer}>
-            {LEVEL_OPTIONS.map((l) => (
-              <TouchableOpacity
-                key={l}
-                style={[styles.levelButton, level === l && styles.levelActive]}
-                onPress={() => setLevel(l)}
-              >
-                <Text style={[styles.levelText, level === l && styles.levelTextActive]}>
-                  {l}
-                </Text>
-              </TouchableOpacity>
-            ))}
-          </View>
-
-          <AutocompleteInput
-            label="Department"
-            value={department}
-            onChangeText={setDepartment}
-            placeholder="e.g. Computer Science"
-            suggestions={programSuggestions}
-            helperText="Start typing to see existing programs"
-          />
-          <AutocompleteInput
-            label="College"
-            value={college}
-            onChangeText={setCollege}
-            placeholder="e.g. COCCS - College of Computing..."
-            suggestions={BOWEN_COLLEGES}
-            helperText="Pick from Bowen's official colleges"
-          />
-
-          {/* Account Info */}
-          <Text style={styles.sectionTitle}>Account Information</Text>
-
-          <InputField
-            label="Email Address"
-            value={email}
-            onChangeText={setEmail}
-            placeholder="Enter your email"
-            keyboardType="email-address"
-            autoCapitalize="none"
-          />
-          <InputField
-            label="Password"
-            value={password}
-            onChangeText={setPassword}
-            placeholder="Minimum 6 characters"
-            secureTextEntry
-            autoCapitalize="none"
-          />
-          <InputField
-            label="Confirm Password"
-            value={confirmPassword}
-            onChangeText={setConfirmPassword}
-            placeholder="Re-enter your password"
-            secureTextEntry
-            autoCapitalize="none"
-          />
-
-          {/* Register Button */}
-          <TouchableOpacity
-            style={styles.button}
-            onPress={handleRegister}
-            disabled={loading}
-          >
-            {loading
-              ? <ActivityIndicator color="#fff" />
-              : <Text style={styles.buttonText}>Create Account</Text>
-            }
-          </TouchableOpacity>
-
-          <TouchableOpacity onPress={() => router.back()}>
-            <Text style={styles.link}>Already have an account? Sign In</Text>
-          </TouchableOpacity>
-
-        </View>
+        {formContent}
       </ScrollView>
     </KeyboardAvoidingView>
   );
 }
+
+const PRIMARY = '#2C3E7A';
 
 const styles = StyleSheet.create({
   container: {
@@ -308,14 +253,18 @@ const styles = StyleSheet.create({
     paddingHorizontal: 24,
     paddingVertical: 40,
   },
+  scrollContentLarge: {
+    alignItems: 'center',
+    paddingVertical: 40,
+  },
   header: {
     alignItems: 'center',
-    marginBottom: 32,
+    marginBottom: 24,
   },
   title: {
     fontSize: 28,
     fontWeight: 'bold',
-    color: '#2C3E7A',
+    color: PRIMARY,
     marginBottom: 8,
   },
   subtitle: {
@@ -326,16 +275,22 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
     borderRadius: 16,
     padding: 24,
+    width: '100%',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.08,
     shadowRadius: 8,
     elevation: 4,
   },
+  formLarge: {
+    maxWidth: 520,
+    paddingHorizontal: 36,
+    paddingVertical: 30,
+  },
   sectionTitle: {
     fontSize: 13,
     fontWeight: '700',
-    color: '#2C3E7A',
+    color: PRIMARY,
     textTransform: 'uppercase',
     letterSpacing: 1,
     marginTop: 20,
@@ -347,7 +302,7 @@ const styles = StyleSheet.create({
   label: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#2C3E7A',
+    color: PRIMARY,
     marginBottom: 6,
     marginTop: 12,
   },
@@ -360,12 +315,13 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#E0E0E0',
   },
-  genderContainer: {
+  // Shared pill style for both Gender and Level
+  pillRow: {
     flexDirection: 'row',
     gap: 8,
     marginTop: 8,
   },
-  genderButton: {
+  pillBtn: {
     flex: 1,
     paddingVertical: 10,
     alignItems: 'center',
@@ -374,47 +330,20 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#E0E0E0',
   },
-  genderActive: {
-    backgroundColor: '#2C3E7A',
-    borderColor: '#2C3E7A',
+  pillActive: {
+    backgroundColor: PRIMARY,
+    borderColor: PRIMARY,
   },
-  genderText: {
+  pillText: {
     fontSize: 14,
     fontWeight: '600',
     color: '#666',
   },
-  genderTextActive: {
-    color: '#fff',
-  },
-  // ── Level selector (same pill style as gender) ──────────────────────────────
-  levelContainer: {
-    flexDirection: 'row',
-    gap: 8,
-    marginTop: 8,
-  },
-  levelButton: {
-    flex: 1,
-    paddingVertical: 10,
-    alignItems: 'center',
-    borderRadius: 8,
-    backgroundColor: '#F5F6FA',
-    borderWidth: 1,
-    borderColor: '#E0E0E0',
-  },
-  levelActive: {
-    backgroundColor: '#2C3E7A',
-    borderColor: '#2C3E7A',
-  },
-  levelText: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#666',
-  },
-  levelTextActive: {
+  pillTextActive: {
     color: '#fff',
   },
   button: {
-    backgroundColor: '#2C3E7A',
+    backgroundColor: PRIMARY,
     borderRadius: 8,
     padding: 14,
     alignItems: 'center',
