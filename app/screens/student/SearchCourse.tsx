@@ -29,21 +29,44 @@ export default function SearchCourse() {
   const [allCourses, setAllCourses] = useState<any[]>([]);
   const [fetchingCourses, setFetchingCourses] = useState(true);
 
-  // Fetch all courses once
+  // Fetch courses filtered by student's level and department
   useEffect(() => {
-    const fetchAllCourses = async () => {
-      const coursesRef = collection(db, 'courses');
-      const querySnapshot = await getDocs(coursesRef);
-      const courseList = querySnapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
-      }));
-      setAllCourses(courseList);
-      setResults(courseList); // show all courses immediately
-      setFetchingCourses(false);
+    if (!studentData) return;
+    const fetchCourses = async () => {
+      setFetchingCourses(true);
+      try {
+        const coursesRef = collection(db, 'courses');
+
+        // Fetch by level match
+        const levelSnap = await getDocs(
+          query(coursesRef, where('level', '==', studentData.level))
+        );
+
+        // Fetch by department match
+        const deptSnap = await getDocs(
+          query(coursesRef, where('department', '==', studentData.department))
+        );
+
+        // Merge and deduplicate by course id
+        const seen = new Set<string>();
+        const merged: any[] = [];
+        [...levelSnap.docs, ...deptSnap.docs].forEach(d => {
+          if (!seen.has(d.id)) {
+            seen.add(d.id);
+            merged.push({ id: d.id, ...d.data() });
+          }
+        });
+
+        setAllCourses(merged);
+        setResults(merged);
+      } catch (err) {
+        console.error(err);
+      } finally {
+        setFetchingCourses(false);
+      }
     };
-    fetchAllCourses();
-  }, []);
+    fetchCourses();
+  }, [studentData]);
 
   // Fetch already enrolled courses
   useEffect(() => {
@@ -94,7 +117,6 @@ export default function SearchCourse() {
   return (
     <View style={styles.container}>
 
-      {/* Sidebar */}
       {sidebarOpen && (
         <Sidebar
           role="student"
@@ -103,32 +125,31 @@ export default function SearchCourse() {
         />
       )}
 
-      {/* Main Content */}
       <View style={styles.content}>
-
-        {/* Top Bar */}
         <View style={styles.topBar}>
           {!isWeb && (
             <TouchableOpacity
               style={styles.menuButton}
               onPress={() => setSidebarOpen(!sidebarOpen)}
             >
-              <Ionicons
-                name={sidebarOpen ? 'close' : 'menu'}
-                size={24}
-                color="#2C3E7A"
-              />
+              <Ionicons name={sidebarOpen ? 'close' : 'menu'} size={24} color="#2C3E7A" />
             </TouchableOpacity>
           )}
           <TouchableOpacity onPress={() => router.back()}>
             <Ionicons name="arrow-back" size={24} color="#2C3E7A" />
           </TouchableOpacity>
-          <Text style={styles.headerTitle}>Search Courses</Text>
+          <View style={{ flex: 1 }}>
+            <Text style={styles.headerTitle}>Search Courses</Text>
+            {studentData?.level && studentData?.department && (
+              <Text style={styles.headerSubtitle}>
+                {studentData.level} Level · {studentData.department}
+              </Text>
+            )}
+          </View>
         </View>
 
         <ScrollView showsVerticalScrollIndicator={false}>
 
-          {/* Search Bar */}
           <View style={styles.searchContainer}>
             <View style={styles.searchBar}>
               <Ionicons name="search-outline" size={20} color="#999" />
@@ -148,7 +169,19 @@ export default function SearchCourse() {
             </View>
           </View>
 
-          {/* Results */}
+          {/* Filter info banner */}
+          {!fetchingCourses && (
+            <View style={styles.filterBanner}>
+              <Ionicons name="filter-outline" size={14} color="#2C3E7A" />
+              <Text style={styles.filterBannerText}>
+                Showing courses for{' '}
+                <Text style={styles.filterBannerBold}>{studentData?.level} Level</Text>
+                {' '}and{' '}
+                <Text style={styles.filterBannerBold}>{studentData?.department}</Text>
+              </Text>
+            </View>
+          )}
+
           <View style={styles.resultsList}>
             {fetchingCourses ? (
               <ActivityIndicator size="large" color="#2C3E7A" style={{ marginTop: 40 }} />
@@ -162,10 +195,10 @@ export default function SearchCourse() {
               </View>
             ) : results.length === 0 ? (
               <View style={styles.emptyState}>
-                <Ionicons name="search-outline" size={48} color="#D0D0D0" />
+                <Ionicons name="book-outline" size={48} color="#D0D0D0" />
                 <Text style={styles.emptyTitle}>No Courses Available</Text>
                 <Text style={styles.emptySubtitle}>
-                  No courses have been created yet
+                  No courses have been created for {studentData?.level} Level or {studentData?.department} yet
                 </Text>
               </View>
             ) : (
@@ -220,7 +253,6 @@ export default function SearchCourse() {
         </ScrollView>
       </View>
 
-      {/* Mobile overlay */}
       {sidebarOpen && !isWeb && (
         <TouchableOpacity
           style={styles.overlay}
@@ -267,7 +299,11 @@ const styles = StyleSheet.create({
     fontSize: isWeb ? 18 : 15,
     fontWeight: 'bold',
     color: '#2C3E7A',
-    flex: 1,
+  },
+  headerSubtitle: {
+    fontSize: 12,
+    color: '#666',
+    marginTop: 1,
   },
   searchContainer: {
     padding: 16,
@@ -289,6 +325,26 @@ const styles = StyleSheet.create({
     fontSize: 15,
     color: '#2D3436',
     outlineStyle: 'none' as any,
+  },
+  filterBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    marginHorizontal: 16,
+    marginBottom: 4,
+    backgroundColor: '#EEF2FF',
+    borderRadius: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+  },
+  filterBannerText: {
+    fontSize: 12,
+    color: '#555',
+    flex: 1,
+  },
+  filterBannerBold: {
+    fontWeight: '700',
+    color: '#2C3E7A',
   },
   resultsList: {
     padding: 16,
